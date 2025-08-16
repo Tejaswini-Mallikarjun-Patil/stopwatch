@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Stopwatch</title>
   <style>
-    :root{
+    :root {
       --bg: #0b1220;
       --panel: #111a2b;
       --text: #e8f0ff;
@@ -16,334 +16,244 @@
       --shadow: 0 10px 30px rgba(0,0,0,.35);
       --radius: 18px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 80% -10%, #17315b 0%, transparent 50%),
-                  radial-gradient(1000px 700px at -10% 110%, #15314a 0%, transparent 55%),
-                  var(--bg);
+    [data-theme="light"] {
+      --bg: #f9fbff;
+      --panel: #ffffff;
+      --text: #1c1c1c;
+      --muted: #666;
+      --accent: #2b78e4;
+      --accent-2: #0bbd87;
+      --danger: #d93025;
+      --shadow: 0 6px 18px rgba(0,0,0,.15);
+    }
+    * { box-sizing:border-box }
+    html,body { height:100% }
+    body {
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell;
+      background: var(--bg);
       color:var(--text); display:grid; place-items:center; padding:20px;
+      transition: background .3s, color .3s;
     }
-    .app{
-      width:min(920px, 95vw);
-    }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    .app { width:min(920px, 95vw); }
+    .card {
+      background: var(--panel);
       backdrop-filter: blur(10px);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:24px;
       border:1px solid rgba(255,255,255,.06);
-      border-radius:var(--radius); box-shadow:var(--shadow);
-      padding:24px; 
+      transition: background .3s;
     }
-    header{
+    header {
       display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
     }
-    h1{font-size:clamp(20px, 4vw, 28px); margin:0; letter-spacing:.5px}
-    .hint{color:var(--muted); font-size:14px}
+    h1 { font-size:clamp(20px, 4vw, 28px); margin:0 }
+    .hint { color:var(--muted); font-size:14px }
+    .theme-toggle { cursor:pointer; font-size:18px; background:none; border:none; color:var(--text); }
 
-    .timer{
+    .timer {
       display:flex; align-items:baseline; justify-content:center; gap:8px; 
-      font-variant-numeric: tabular-nums; 
-      user-select:none;
+      font-variant-numeric: tabular-nums; user-select:none;
       padding:10px 0 6px;
     }
-    .time{
-      font-size: clamp(40px, 10vw, 88px);
-      font-weight:700;
-      letter-spacing: .5px;
-    }
-    .millis{font-size: clamp(18px, 4vw, 28px); opacity:.8; min-width:2ch; display:inline-block; text-align:left}
+    .time { font-size: clamp(40px, 10vw, 88px); font-weight:700 }
+    .millis { font-size: clamp(18px, 4vw, 28px); opacity:.8; min-width:2ch }
 
-    .controls{
+    .controls {
       display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:18px 0 6px;
     }
-    button{
+    button {
       appearance:none; border:none; border-radius: 999px; padding:12px 18px; 
-      background:#1a2742; color:var(--text); cursor:pointer; font-size:15px; 
-      transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+      background:#1a2742; color:var(--text); cursor:pointer; font-size:15px;
+      transition: transform .06s, background .2s, box-shadow .2s;
     }
-    button:hover{ transform: translateY(-1px); }
-    button:active{ transform: translateY(1px) scale(.99); }
-    .primary{ background: linear-gradient(135deg, var(--accent), #7ad7ff); color:#061021; font-weight:600 }
-    .secondary{ background: linear-gradient(135deg, var(--accent-2), #8ef5da); color:#061021; font-weight:600 }
-    .danger{ background: linear-gradient(135deg, #ff8b8b, var(--danger)); color:#2d0b0b; font-weight:700 }
-    .ghost{ background:#1a2742 }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px) scale(.99); }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .primary { background: linear-gradient(135deg, var(--accent), #7ad7ff); color:#061021; font-weight:600 }
+    .secondary { background: linear-gradient(135deg, var(--accent-2), #8ef5da); color:#061021; font-weight:600 }
+    .danger { background: linear-gradient(135deg, #ff8b8b, var(--danger)); color:#2d0b0b; font-weight:700 }
+    .ghost { background:#1a2742 }
 
-    .grid{ display:grid; grid-template-columns: 1fr; gap:14px; margin-top:18px }
-    @media(min-width:800px){
-      .grid{ grid-template-columns: 1.2fr .8fr }
-    }
-
-    .laps{
-      max-height: 360px; overflow:auto; border-radius:calc(var(--radius) - 6px);
+    .laps {
+      max-height: 360px; overflow:auto;
+      border-radius:calc(var(--radius) - 6px);
       border:1px solid rgba(255,255,255,.06);
-      background: linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.02));
     }
-    .laps table{ width:100%; border-collapse:collapse; font-variant-numeric: tabular-nums }
-    .laps th, .laps td{ padding:10px 12px; text-align:right; border-bottom:1px solid rgba(255,255,255,.06) }
-    .laps th{ position:sticky; top:0; background: rgba(17,26,43,.9); backdrop-filter: blur(6px); text-align:right; font-weight:600 }
-    .laps td:first-child, .laps th:first-child{ text-align:left }
-    .empty{ color:var(--muted); text-align:center; padding:18px }
+    .laps table { width:100%; border-collapse:collapse; font-variant-numeric: tabular-nums }
+    .laps th, .laps td { padding:10px 12px; text-align:right; border-bottom:1px solid rgba(255,255,255,.06) }
+    .laps th { position:sticky; top:0; background: var(--panel); font-weight:600 }
+    .laps td:first-child, .laps th:first-child { text-align:left }
+    .empty { color:var(--muted); text-align:center; padding:18px }
 
-    .footer{
-      display:flex; justify-content:space-between; align-items:center; margin-top:8px; color:var(--muted); font-size:13px
-    }
-    .kbd{ border:1px solid rgba(255,255,255,.2); border-bottom-width:2px; padding:.5px 6px; border-radius:6px; margin:0 2px; font-weight:600; color:var(--text); background: rgba(255,255,255,.08) }
-    .sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0 }
-    a{color:var(--accent)}
+    .footer { display:flex; justify-content:space-between; margin-top:8px; color:var(--muted); font-size:13px }
+    .kbd { border:1px solid rgba(255,255,255,.2); border-bottom-width:2px; padding:.5px 6px; border-radius:6px; margin:0 2px; }
   </style>
-  <!-- PWA: manifest + theme color -->
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0b1220" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
 <body>
-  <main class="app card" role="application" aria-label="Stopwatch">
+  <main class="app card">
     <header>
       <h1>⏱️ Stopwatch</h1>
-      <div class="hint">Space = Start/Pause · <span class="kbd">L</span> Lap · <span class="kbd">R</span> Reset</div>
+      <button id="theme-toggle" class="theme-toggle" title="Toggle theme">🌙</button>
     </header>
 
-    <section class="timer" aria-live="polite" aria-atomic="true">
+    <section class="timer">
       <div class="time" id="time-main">00:00:00</div>
       <div class="millis" id="time-ms">00</div>
-      <span class="sr-only" id="aria-time">00 hours 00 minutes 00 seconds and 00 hundredths</span>
     </section>
 
-    <div class="controls" role="group" aria-label="Stopwatch controls">
-      <button id="btn-start" class="primary" aria-pressed="false">Start</button>
+    <div class="controls">
+      <button id="btn-start" class="primary">Start</button>
       <button id="btn-lap" class="secondary" disabled>Lap</button>
       <button id="btn-reset" class="ghost" disabled>Reset</button>
-      <button id="btn-export" class="ghost" title="Export laps to CSV" disabled>Export CSV</button>
-      <button id="btn-clear" class="danger" title="Clear laps" disabled>Clear Laps</button>
+      <button id="btn-export" class="ghost" disabled>Export CSV</button>
+      <button id="btn-clear" class="danger" disabled>Clear Laps</button>
     </div>
 
-    <div class="grid">
-      <section class="card" aria-label="Session Stats">
-        <h2 style="margin:0 0 8px; font-size:18px; color:var(--muted)">Stats</h2>
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-variant-numeric: tabular-nums">
-          <div class="mini">
-            <div style="color:var(--muted); font-size:12px">Laps</div>
-            <div id="stat-laps" style="font-size:20px; font-weight:700">0</div>
-          </div>
-          <div class="mini">
-            <div style="color:var(--muted); font-size:12px">Fastest Lap</div>
-            <div id="stat-fast" style="font-size:20px; font-weight:700">–</div>
-          </div>
-          <div class="mini">
-            <div style="color:var(--muted); font-size:12px">Slowest Lap</div>
-            <div id="stat-slow" style="font-size:20px; font-weight:700">–</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="laps" aria-label="Lap times">
-        <table id="laps-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Lap</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody id="laps-body">
-            <tr><td colspan="3" class="empty">No laps yet. Press <span class="kbd">L</span> or the Lap button.</td></tr>
-          </tbody>
-        </table>
-      </section>
-    </div>
+    <section class="laps">
+      <table id="laps-table">
+        <thead>
+          <tr><th>#</th><th>Lap</th><th>Total</th></tr>
+        </thead>
+        <tbody id="laps-body">
+          <tr><td colspan="3" class="empty">No laps yet.</td></tr>
+        </tbody>
+      </table>
+    </section>
 
     <div class="footer">
-      <div>Accurate timing using <code>performance.now()</code></div>
       <div>Made with HTML · CSS · JS</div>
+      <div id="status"></div>
     </div>
   </main>
 
   <script>
-    // --- High-precision Stopwatch ---
     const el = {
       main: document.getElementById('time-main'),
       ms: document.getElementById('time-ms'),
-      aria: document.getElementById('aria-time'),
       start: document.getElementById('btn-start'),
       lap: document.getElementById('btn-lap'),
       reset: document.getElementById('btn-reset'),
       export: document.getElementById('btn-export'),
       clear: document.getElementById('btn-clear'),
       lapsBody: document.getElementById('laps-body'),
-      statLaps: document.getElementById('stat-laps'),
-      statFast: document.getElementById('stat-fast'),
-      statSlow: document.getElementById('stat-slow'),
+      themeToggle: document.getElementById('theme-toggle'),
+      status: document.getElementById('status')
     };
 
-    let running = false;
-    let startTime = 0;           // perf timestamp when started
-    let accumulated = 0;         // ms accumulated across pauses
-    let rafId = null;            // animation frame id
-    let lastTick = 0;            // last perf tick
-    let laps = [];               // {lapMs, totalMs}
+    let running = false, startTime=0, accumulated=0, laps=[], rafId=null;
 
     function fmt(ms){
-      const total = Math.floor(ms);
-      const h = Math.floor(total / 3600000);
-      const m = Math.floor((total % 3600000) / 60000);
-      const s = Math.floor((total % 60000) / 1000);
-      const cs = Math.floor((total % 1000) / 10); // centiseconds
-      const HH = String(h).padStart(2,'0');
-      const MM = String(m).padStart(2,'0');
-      const SS = String(s).padStart(2,'0');
-      const CS = String(cs).padStart(2,'0');
-      return {HH,MM,SS,CS};
+      const h = Math.floor(ms/3600000);
+      const m = Math.floor((ms%3600000)/60000);
+      const s = Math.floor((ms%60000)/1000);
+      const cs= Math.floor((ms%1000)/10);
+      return {
+        HH:String(h).padStart(2,'0'),
+        MM:String(m).padStart(2,'0'),
+        SS:String(s).padStart(2,'0'),
+        CS:String(cs).padStart(2,'0')
+      }
     }
-
     function render(ms){
-      const {HH,MM,SS,CS} = fmt(ms);
-      el.main.textContent = `${HH}:${MM}:${SS}`;
-      el.ms.textContent = CS;
-      el.aria.textContent = `${HH} hours ${MM} minutes ${SS} seconds and ${CS} hundredths`;
+      const {HH,MM,SS,CS}=fmt(ms);
+      el.main.textContent=`${HH}:${MM}:${SS}`;
+      el.ms.textContent=CS;
+      document.title = running ? `⏱️ Running... ${HH}:${MM}:${SS}` : "Stopwatch";
     }
-
-    function now(){ return performance.now(); }
-
+    function now(){return performance.now();}
     function tick(){
-      const elapsed = accumulated + (running ? (now() - startTime) : 0);
+      const elapsed=accumulated+(running?(now()-startTime):0);
       render(elapsed);
-      // schedule next frame around 60fps
-      rafId = requestAnimationFrame(tick);
+      rafId=requestAnimationFrame(tick);
+      saveState();
     }
-
     function start(){
-      if(running) return;
-      running = true;
-      startTime = now();
-      el.start.textContent = 'Pause';
-      el.start.setAttribute('aria-pressed','true');
-      el.lap.disabled = false;
-      el.reset.disabled = false;
-      el.export.disabled = laps.length === 0;
-      el.clear.disabled = laps.length === 0;
-      if(!rafId) rafId = requestAnimationFrame(tick);
+      if(running)return;
+      running=true; startTime=now();
+      el.start.textContent="Pause";
+      el.lap.disabled=false; el.reset.disabled=false;
     }
-
     function pause(){
-      if(!running) return;
-      running = false;
-      accumulated += now() - startTime;
-      el.start.textContent = 'Start';
-      el.start.setAttribute('aria-pressed','false');
+      if(!running)return;
+      running=false; accumulated+=now()-startTime;
+      el.start.textContent="Start";
     }
-
     function reset(){
-      pause();
-      accumulated = 0; startTime = 0; lastTick = 0;
-      render(0);
-      laps = [];
-      drawLaps();
-      el.reset.disabled = true;
-      el.lap.disabled = true;
-      el.export.disabled = true;
-      el.clear.disabled = true;
+      pause(); accumulated=0; laps=[];
+      render(0); drawLaps();
+      el.reset.disabled=true; el.lap.disabled=true; 
+      el.export.disabled=true; el.clear.disabled=true;
     }
-
-    function currentTotal(){
-      return accumulated + (running ? (now() - startTime) : 0);
-    }
-
+    function currentTotal(){ return accumulated+(running?(now()-startTime):0); }
     function addLap(){
-      const totalMs = currentTotal();
-      const prevTotal = laps.length ? laps[laps.length - 1].totalMs : 0;
-      const lapMs = totalMs - prevTotal;
-      laps.push({ lapMs, totalMs });
+      const total=currentTotal();
+      const prev=laps.length?laps[laps.length-1].totalMs:0;
+      laps.push({lapMs:total-prev,totalMs:total});
       drawLaps();
-      el.export.disabled = false;
-      el.clear.disabled = false;
     }
-
     function drawLaps(){
-      const tbody = el.lapsBody;
-      tbody.innerHTML = '';
-      if(laps.length === 0){
-        tbody.innerHTML = '<tr><td colspan="3" class="empty">No laps yet. Press <span class="kbd">L</span> or the Lap button.</td></tr>';
-      } else {
-        const fastest = Math.min(...laps.map(l=>l.lapMs));
-        const slowest = Math.max(...laps.map(l=>l.lapMs));
-        el.statLaps.textContent = String(laps.length);
-        el.statFast.textContent = toDisp(fastest);
-        el.statSlow.textContent = toDisp(slowest);
-        [...laps].reverse().forEach((l, iRev) => {
-          const idx = laps.length - iRev; // natural numbering
-          const tr = document.createElement('tr');
-          const tdIdx = document.createElement('td'); tdIdx.textContent = idx;
-          const tdLap = document.createElement('td'); tdLap.textContent = toDisp(l.lapMs);
-          const tdTotal = document.createElement('td'); tdTotal.textContent = toDisp(l.totalMs);
-          if(l.lapMs === fastest) tdLap.style.color = 'var(--accent-2)';
-          if(l.lapMs === slowest) tdLap.style.color = 'var(--danger)';
-          tr.append(tdIdx, tdLap, tdTotal);
-          tbody.appendChild(tr);
-        });
+      const tbody=el.lapsBody; tbody.innerHTML="";
+      if(!laps.length){
+        tbody.innerHTML='<tr><td colspan="3" class="empty">No laps yet.</td></tr>'; 
+        el.export.disabled=true; el.clear.disabled=true;
+        return;
       }
-    }
-
-    function toDisp(ms){
-      const {HH,MM,SS,CS} = fmt(ms);
-      return `${HH}:${MM}:${SS}.${CS}`;
-    }
-
-    function exportCSV(){
-      if(laps.length === 0) return;
-      const header = 'Lap #,Lap Time,Total Time\n';
-      const rows = laps.map((l, i) => `${i+1},${toDisp(l.lapMs)},${toDisp(l.totalMs)}`).join('\n');
-      const blob = new Blob([header + rows], {type:'text/csv'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `stopwatch_laps_${new Date().toISOString().replace(/[:.]/g,'-')}.csv`;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function clearLaps(){
-      laps = []; drawLaps();
-      el.export.disabled = true; el.clear.disabled = true;
-    }
-
-    // --- Wire up controls ---
-    el.start.addEventListener('click', () => running ? pause() : start());
-    el.reset.addEventListener('click', reset);
-    el.lap.addEventListener('click', addLap);
-    el.export.addEventListener('click', exportCSV);
-    el.clear.addEventListener('click', clearLaps);
-
-    // Keyboard shortcuts
-    window.addEventListener('keydown', (e) => {
-      if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-      if(e.code === 'Space'){ e.preventDefault(); running ? pause() : start(); }
-      if(e.key.toLowerCase() === 'l'){ addLap(); }
-      if(e.key.toLowerCase() === 'r'){ reset(); }
-    });
-
-    // Start animation loop
-    rafId = requestAnimationFrame(tick);
-
-    // Ensure pause when tab hidden to save CPU; keep elapsed correct
-    document.addEventListener('visibilitychange', () => {
-      if(document.hidden && running){
-        // Accumulate up to the moment tab hides so resume is accurate
-        accumulated += now() - startTime;
-        startTime = now();
-      }
-    });
-
-    // Initial render
-    render(0);
-      // --- PWA: Service Worker registration ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(reg => console.log('Service worker registered', reg.scope))
-          .catch(err => console.warn('SW registration failed', err));
+      laps.forEach((l,i)=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${i+1}</td><td>${toDisp(l.lapMs)}</td><td>${toDisp(l.totalMs)}</td>`;
+        tbody.appendChild(tr);
       });
+      el.export.disabled=false; 
+      el.clear.disabled=false;
     }
+    function toDisp(ms){ const {HH,MM,SS,CS}=fmt(ms); return `${HH}:${MM}:${SS}.${CS}`; }
+    function exportCSV(){
+      if(!laps.length)return;
+      const header="Lap #,Lap Time,Total Time\n";
+      const rows=laps.map((l,i)=>`${i+1},${toDisp(l.lapMs)},${toDisp(l.totalMs)}`).join("\n");
+      const blob=new Blob([header+rows],{type:"text/csv"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url; a.download="laps.csv"; a.click(); URL.revokeObjectURL(url);
+    }
+    function clearLaps(){ laps=[]; drawLaps(); }
+
+    // --- Theme Toggle ---
+    function applyTheme(theme){
+      document.body.dataset.theme=theme;
+      el.themeToggle.textContent = theme==="light"?"🌙":"☀️";
+      localStorage.setItem("theme",theme);
+    }
+    el.themeToggle.addEventListener("click",()=>applyTheme(document.body.dataset.theme==="light"?"dark":"light"));
+    applyTheme(localStorage.getItem("theme")||"dark");
+
+    // --- Save / Load state ---
+    function saveState(){
+      const state={running,accumulated,runningSince:running?Date.now()- (now()-startTime):0,laps};
+      localStorage.setItem("stopwatch",JSON.stringify(state));
+    }
+    function loadState(){
+      const data=localStorage.getItem("stopwatch");
+      if(!data)return;
+      const state=JSON.parse(data);
+      accumulated=state.accumulated;
+      laps=state.laps||[];
+      if(state.running){running=true; startTime=now(); el.start.textContent="Pause";}
+      drawLaps();
+    }
+
+    // Wire controls
+    el.start.addEventListener("click",()=>running?pause():start());
+    el.reset.addEventListener("click",reset);
+    el.lap.addEventListener("click",addLap);
+    el.export.addEventListener("click",exportCSV);
+    el.clear.addEventListener("click",clearLaps);
+
+    loadState();
+    rafId=requestAnimationFrame(tick);
   </script>
 </body>
 </html>
+
+
